@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-query-firebase/firestore": "^1.0.0-dev.7",
     "expo": "~47.0.12",
     "expo-firebase-core": "~6.0.0",
     "expo-status-bar": "~1.4.2",

@@ -1,10 +1,11 @@
-import { StatusBar } from 'expo-status-bar';
-import { initializeApp } from "firebase/app";
-import { Button, StyleSheet, Text, View } from 'react-native';
-import Counter, { CounterData, CounterDocumentData, PartialCounterDocumentData } from "./components/Counter";
-import { addDoc, collection, doc, getDocs, getFirestore, query, setDoc } from 'firebase/firestore';
+import { useFirestoreQuery, useFirestoreCollectionMutation } from "@react-query-firebase/firestore";
 import * as FirebaseCore from 'expo-firebase-core';
-import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from "react-query";
+import { query, collection, getFirestore } from "firebase/firestore";
+import { Button, View, StyleSheet, Text } from "react-native";
+import { StatusBar } from 'expo-status-bar';
+import { QueryClientProvider, QueryClient } from "react-query";
+import Counter, { CounterDocumentData, PartialCounterDocumentData } from "./components/Counter";
+import { initializeApp } from 'firebase/app'
 
 initializeApp(
   FirebaseCore.DEFAULT_WEB_APP_OPTIONS as FirebaseCore.FirebaseOptions
@@ -18,69 +19,43 @@ export default function Providers() {
   );
 }
 
-async function _decrement(counter: CounterData) {
-  await setDoc(doc(getFirestore(), 'counters', counter.id), {
-    count: Math.max(counter.count - 1, 0),
-  } as PartialCounterDocumentData, {
-    merge: true, // prevent this from causing future bugs
-  });
-}
-
-async function _increment(counter: CounterData) {
-  await setDoc(doc(getFirestore(), 'counters', counter.id), {
-    count: counter.count + 1,
-  } as PartialCounterDocumentData, {
-    merge: true, // prevent this from causing future bugs
-  });
-}
-
-async function _addCounter() {
-  await addDoc(collection(getFirestore(), 'counters'), {
-    count: 0,
-  } as CounterDocumentData);
-}
-
-async function fetchCounters(): Promise<CounterData[]> {
-  const counterCollection =
-    await getDocs(query(collection(getFirestore(), 'counters')));
-  return counterCollection.docs.map((doc) => ({
-    ...(doc.data() as CounterDocumentData),
-    id: doc.id,
-  }));
-}
-
 function App() {
-  const queryClient = useQueryClient();
+  const { data: counters, isLoading } = useFirestoreQuery(
+    ['counters'],
+    query(collection(getFirestore(), 'counters')),
+    {
+      subscribe: true,
+    },
+    {
+      select: (snapshot) => snapshot.docs.map((doc) => ({
+        ...doc.data() as CounterDocumentData,
+        id: doc.id
+      })),
+    },
+  );
 
-  const { data: counters, isLoading } = useQuery('counters', fetchCounters);
-
-  const { mutate: increment } = useMutation(_increment, {
-    onSuccess: () => queryClient.invalidateQueries('counters'),
-  });
-
-  const { mutate: decrement } = useMutation(_decrement, {
-    onSuccess: () => queryClient.invalidateQueries('counters'),
-  });
-
-  const { mutate: addCounter } = useMutation(_addCounter, {
-    onSuccess: () => queryClient.invalidateQueries('counters'),
-  });
+  const { mutate: addCounter } = useFirestoreCollectionMutation(
+    collection(getFirestore(), 'counters'),
+  );
 
   function render() {
-    if (isLoading && !counters) {
+    if (isLoading) {
       return (
         <Text>Loading...</Text>
+      );
+    }
+    if (!counters) {
+      return (
+        <Text>No Counters.</Text>
       );
     }
     return (
       <>
         {counters!.map((counter) => <Counter
           key={counter.id}
-          count={counter.count}
-          decrement={() => decrement(counter)}
-          increment={() => increment(counter)}
+          counter={counter}
         />)}
-        <Button title="Add Counter" onPress={() => addCounter()} />
+        <Button title="Add Counter" onPress={() => addCounter({ count: 0 })} />
       </>
     );
   }
