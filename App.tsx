@@ -3,57 +3,70 @@ import { initializeApp } from "firebase/app";
 import { Button, StyleSheet, Text, View } from 'react-native';
 import Counter, { CounterData, CounterDocumentData } from "./components/Counter";
 import { firebaseConfig } from "./firebase";
-import { collection, doc, getDocs, getFirestore, query } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, getFirestore, query, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from "react";
 
 initializeApp(firebaseConfig);
-
-function decrement(id: string): void {
-
-}
-
-function increment(id: string): void {
-
-}
-
-function addCounter(): void {
-
-}
-
-async function fetchCounters(): Promise<CounterData[]> {
-  const counterCollection =
-    await getDocs(query(collection(getFirestore(), 'counters')));
-  return counterCollection.docs.map((doc) => ({
-    ...(doc.data() as CounterDocumentData),
-    id: doc.id,
-  }));
-}
-
 
 export default function App() {
   const [counters, setCounters] = useState<CounterData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const data = await fetchCounters();
-      setCounters(data);
-      setLoading(false);
-    })();
-  }, []);
+  async function refreshCounters() {
+    setLoading(true);
+    setCounters(await fetchCounters());
+    setLoading(false);
+  }
+
+  useEffect(() => { refreshCounters(); }, []);
+
+  async function decrement(counter: CounterData) {
+    await setDoc(doc(getFirestore(), 'counters', counter.id), {
+      count: Math.max(counter.count - 1, 0),
+    } as CounterDocumentData, {
+      merge: true, // prevent this from causing future bugs
+    });
+    refreshCounters();
+  }
+
+  async function increment(counter: CounterData) {
+    await setDoc(doc(getFirestore(), 'counters', counter.id), {
+      count: counter.count + 1,
+    } as CounterDocumentData, {
+      merge: true, // prevent this from causing future bugs
+    });
+    refreshCounters();
+  }
+
+  async function addCounter() {
+    await addDoc(collection(getFirestore(), 'counters'), {
+      count: 0,
+    } as CounterDocumentData);
+    refreshCounters();
+  }
+
+  async function fetchCounters(): Promise<CounterData[]> {
+    const counterCollection =
+      await getDocs(query(collection(getFirestore(), 'counters')));
+    return counterCollection.docs.map((doc) => ({
+      ...(doc.data() as CounterDocumentData),
+      id: doc.id,
+    }));
+  }
 
   function render() {
-    if (loading) {
+    if (loading && !counters) {
       return (
         <Text>Loading...</Text>
       );
     }
     return (
       <>
-        {counters.map(({ count, id }) => <Counter
-          count={count}
-          decrement={() => decrement(id)}
-          increment={() => increment(id)}
+        {counters.map((counter) => <Counter
+          key={counter.id}
+          count={counter.count}
+          decrement={() => decrement(counter)}
+          increment={() => increment(counter)}
         />)}
         <Button title="Add Counter" onPress={addCounter} />
       </>
