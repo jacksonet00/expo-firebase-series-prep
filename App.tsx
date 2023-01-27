@@ -2,11 +2,13 @@ import { StatusBar } from 'expo-status-bar';
 import { initializeApp } from "firebase/app";
 import { Button, StyleSheet, Text, View } from 'react-native';
 import Counter, { CounterData, CounterDocumentData } from "./components/Counter";
-import { firebaseConfig } from "./firebase";
 import { addDoc, collection, doc, getDocs, getFirestore, query, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from "react";
+import * as FirebaseCore from 'expo-firebase-core';
 
-initializeApp(firebaseConfig);
+initializeApp(
+  FirebaseCore.DEFAULT_WEB_APP_OPTIONS as FirebaseCore.FirebaseOptions
+);
 
 export default function App() {
   const [counters, setCounters] = useState<CounterData[]>([]);
