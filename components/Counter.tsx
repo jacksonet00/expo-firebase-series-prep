@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button, GestureResponderEvent } from 'react-native';
 
-
 export type CounterData = {
     id: string;
     count: number;
@@ -10,6 +9,10 @@ export type CounterData = {
 export type CounterDocumentData = {
     count: number;
 };
+
+export type PartialCounterDocumentData = {
+    count?: number;
+}
 
 interface CounterProps {
     count: number;

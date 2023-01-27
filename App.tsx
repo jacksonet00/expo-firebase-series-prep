@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { initializeApp } from "firebase/app";
 import { Button, StyleSheet, Text, View } from 'react-native';
-import Counter, { CounterData, CounterDocumentData } from "./components/Counter";
+import Counter, { CounterData, CounterDocumentData, PartialCounterDocumentData } from "./components/Counter";
 import { addDoc, collection, doc, getDocs, getFirestore, query, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from "react";
 import * as FirebaseCore from 'expo-firebase-core';
@@ -25,7 +25,7 @@ export default function App() {
   async function decrement(counter: CounterData) {
     await setDoc(doc(getFirestore(), 'counters', counter.id), {
       count: Math.max(counter.count - 1, 0),
-    } as CounterDocumentData, {
+    } as PartialCounterDocumentData, {
       merge: true, // prevent this from causing future bugs
     });
     refreshCounters();
@@ -34,7 +34,7 @@ export default function App() {
   async function increment(counter: CounterData) {
     await setDoc(doc(getFirestore(), 'counters', counter.id), {
       count: counter.count + 1,
-    } as CounterDocumentData, {
+    } as PartialCounterDocumentData, {
       merge: true, // prevent this from causing future bugs
     });
     refreshCounters();

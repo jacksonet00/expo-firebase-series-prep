@@ -1,5 +1,14 @@
+import { FirebaseOptions } from "expo-firebase-core";
 import { ExpoConfig, ConfigContext } from 'expo/config';
-import { firebaseConfig } from "./firebase";
+
+const firebaseOptions: FirebaseOptions = {
+  apiKey: "AIzaSyDHqLRCKFxccWdAX8NJpHRVPPqJXAgac8w",
+  authDomain: "fir-expo-series-prep.firebaseapp.com",
+  projectId: "fir-expo-series-prep",
+  storageBucket: "fir-expo-series-prep.appspot.com",
+  messagingSenderId: "500544743241",
+  appId: "1:500544743241:web:5d424d480f14352cdf9c98"
+};
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -32,7 +41,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   web: {
     favicon: "./assets/favicon.png",
     config: {
-      firebase: firebaseConfig,
+      firebase: firebaseOptions,
     }
   }
 });
