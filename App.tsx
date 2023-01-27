@@ -1,5 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
+import { initializeApp } from "firebase/app";
 import { StyleSheet, Text, View } from 'react-native';
+import { firebaseConfig } from "./firebase";
+
+initializeApp(firebaseConfig);
 
 export default function App() {
   return (
