@@ -1,6 +1,5 @@
 import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from "@react-query-firebase/firestore";
 import { doc, getFirestore } from "firebase/firestore";
-import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 
 export type CounterData = {
@@ -27,23 +26,23 @@ const Counter: React.FC<CounterProps> = ({
 
     const counterDocument = doc(getFirestore(), 'counters', id);
 
-    const { mutate } = useFirestoreDocumentMutation(
+    const { mutate: updateCounter } = useFirestoreDocumentMutation<PartialCounterDocumentData>(
         counterDocument,
         {
             merge: true,
         }
     );
 
-    const { mutate: remove } = useFirestoreDocumentDeletion(counterDocument);
+    const { mutate: deleteCounter } = useFirestoreDocumentDeletion(counterDocument);
 
     return (
         <View style={styles.container}>
-            <Button title="x" onPress={() => remove()} />
+            <Button title="x" onPress={() => deleteCounter()} />
             <Text>{count}</Text>
-            <Button title="-" onPress={() => mutate({
+            <Button title="-" onPress={() => updateCounter({
                 count: Math.max(0, count - 1)
             })} />
-            <Button title="+" onPress={() => mutate({ count: count + 1 })} />
+            <Button title="+" onPress={() => updateCounter({ count: count + 1, })} />
         </View>
     );
 };

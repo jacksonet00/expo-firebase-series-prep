@@ -4,7 +4,7 @@ import { query, collection, getFirestore } from "firebase/firestore";
 import { Button, View, StyleSheet, Text } from "react-native";
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider, QueryClient } from "react-query";
-import Counter, { CounterDocumentData, PartialCounterDocumentData } from "./components/Counter";
+import Counter, { CounterDocumentData } from "./components/Counter";
 import { initializeApp } from 'firebase/app'
 
 initializeApp(
