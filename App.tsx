@@ -1,10 +1,10 @@
-import { useFirestoreQuery, useFirestoreCollectionMutation } from "@react-query-firebase/firestore";
+import { useFirestoreCollectionMutation, useFirestoreQueryData } from "@react-query-firebase/firestore";
 import * as FirebaseCore from 'expo-firebase-core';
 import { query, collection, getFirestore } from "firebase/firestore";
 import { Button, View, StyleSheet, Text } from "react-native";
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider, QueryClient } from "react-query";
-import Counter, { CounterDocumentData } from "./components/Counter";
+import Counter, { convertCounterData, convertCounterDocumentData, CounterData, CounterDocumentData } from "./components/Counter";
 import { initializeApp } from 'firebase/app'
 
 initializeApp(
@@ -20,49 +20,50 @@ export default function Providers() {
 }
 
 function App() {
-  const { data: counters, isLoading } = useFirestoreQuery(
+  const counterCollection = collection(getFirestore(), 'counters');
+
+  const { data: counters, isLoading, isError } = useFirestoreQueryData<CounterData>(
     ['counters'],
-    query(collection(getFirestore(), 'counters')),
+    query(counterCollection.withConverter<CounterData>(convertCounterData)),
     {
       subscribe: true,
-    },
-    {
-      select: (snapshot) => snapshot.docs.map((doc) => ({
-        ...doc.data() as CounterDocumentData,
-        id: doc.id
-      })),
     },
   );
 
   const { mutate: addCounter } = useFirestoreCollectionMutation(
-    collection(getFirestore(), 'counters'),
-  );
+    counterCollection.withConverter<CounterDocumentData>(convertCounterDocumentData));
 
-  function render() {
-    if (isLoading) {
-      return (
-        <Text>Loading...</Text>
-      );
-    }
-    if (!counters) {
-      return (
-        <Text>No Counters.</Text>
-      );
-    }
+  function handleAddCounter() {
+    addCounter({
+      count: 0,
+    });
+  }
+
+  if (isError) {
     return (
-      <>
-        {counters!.map((counter) => <Counter
-          key={counter.id}
-          counter={counter}
-        />)}
-        <Button title="Add Counter" onPress={() => addCounter({ count: 0 })} />
-      </>
+      <Text>Error!</Text>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Text>Loading...</Text>
+    );
+  }
+
+  if (!counters) {
+    return (
+      <Text>No Counters.</Text>
     );
   }
 
   return (
     <View style={styles.container}>
-      {render()}
+      {counters!.map((counter) => <Counter
+        key={counter.id}
+        counter={counter}
+      />)}
+      <Button title="Add Counter" onPress={handleAddCounter} />
       <StatusBar style="auto" />
     </View>
   );
@@ -71,7 +72,6 @@ function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },

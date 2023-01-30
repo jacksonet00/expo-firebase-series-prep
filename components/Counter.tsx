@@ -1,5 +1,5 @@
 import { useFirestoreDocumentDeletion, useFirestoreDocumentMutation } from "@react-query-firebase/firestore";
-import { doc, getFirestore } from "firebase/firestore";
+import { doc, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from "firebase/firestore";
 import { View, Text, StyleSheet, Button } from 'react-native';
 
 export type CounterData = {
@@ -7,9 +7,28 @@ export type CounterData = {
     count: number;
 };
 
+export const convertCounterData: FirestoreDataConverter<CounterData> = {
+    toFirestore: ({ count }: CounterData): CounterDocumentData => ({
+        count,
+    }),
+    fromFirestore: (doc: QueryDocumentSnapshot): CounterData => ({
+        ...doc.data() as CounterDocumentData,
+        id: doc.id,
+    }),
+};
+
 export type CounterDocumentData = {
     count: number;
 };
+
+export const convertCounterDocumentData: FirestoreDataConverter<CounterDocumentData> = {
+    toFirestore: ({ count }: CounterDocumentData): CounterDocumentData => ({
+        count,
+    }),
+    fromFirestore: (doc: QueryDocumentSnapshot): CounterDocumentData => ({
+        ...doc.data() as CounterDocumentData,
+    }),
+}
 
 export type PartialCounterDocumentData = {
     count?: number;
@@ -35,14 +54,28 @@ const Counter: React.FC<CounterProps> = ({
 
     const { mutate: deleteCounter } = useFirestoreDocumentDeletion(counterDocument);
 
+    function handleIncrementCounter() {
+        updateCounter({
+            count: Math.max(0, count - 1),
+        });
+    }
+
+    function handleDecrementCounter() {
+        updateCounter({
+            count: count + 1,
+        });
+    }
+
+    function handleDeleteCounter() {
+        deleteCounter();
+    }
+
     return (
         <View style={styles.container}>
-            <Button title="x" onPress={() => deleteCounter()} />
+            <Button title="x" onPress={handleDeleteCounter} />
             <Text>{count}</Text>
-            <Button title="-" onPress={() => updateCounter({
-                count: Math.max(0, count - 1)
-            })} />
-            <Button title="+" onPress={() => updateCounter({ count: count + 1, })} />
+            <Button title="-" onPress={handleDecrementCounter} />
+            <Button title="+" onPress={handleIncrementCounter} />
         </View>
     );
 };
@@ -50,8 +83,6 @@ const Counter: React.FC<CounterProps> = ({
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        justifyContent: 'center',
-        display: 'flex',
         flexDirection: 'row',
     },
 });
